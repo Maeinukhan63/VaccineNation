@@ -1,0 +1,59 @@
+package com.example.VaccineNation.service;
+
+import com.example.VaccineNation.Enum.VaccineBrand;
+import com.example.VaccineNation.exception.patientNotFound;
+import com.example.VaccineNation.model.Dose;
+import com.example.VaccineNation.model.Patient;
+import com.example.VaccineNation.repository.DoseRepository;
+import com.example.VaccineNation.repository.PatientRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import java.util.Optional;
+import java.util.UUID;
+
+@Service
+public class DoseService {
+
+    @Autowired
+    DoseRepository doseRepository;
+
+    @Autowired
+    PatientRepository patientRepository;
+
+    public Dose addDose(int patientId, VaccineBrand vaccineBrand) {
+
+        Optional<Patient> patientOptional=patientRepository.findById(patientId);
+
+        if(patientOptional.isEmpty()){
+            throw new patientNotFound("Invalid Patient details");
+        }
+
+        Patient patient=patientOptional.get();
+
+        if(patient.isVaccinated()){
+            throw new RuntimeException("Patient already taken Dose");
+        }
+
+        patient.setVaccinated(true);
+
+        Dose dose=new Dose();
+        dose.setVaccineBrand(vaccineBrand);
+        dose.setSerialNumber(String.valueOf(UUID.randomUUID()));
+        dose.setPatient(patient); //setting the F.k
+
+        patientRepository.save(patient);
+       return  doseRepository.save(dose);
+    }
+
+
+    public Dose getDose(int id) {
+        Optional<Dose> doseOptional=doseRepository.findById(id);
+        return doseOptional.get();
+    }
+
+    public String DeleteDose(int id) {
+        doseRepository.deleteById(id);
+        return "Dose Details Deleted Successfully";
+    }
+}
